@@ -1,0 +1,68 @@
+
+.normalForm{
+    display: block;
+    clear: both;
+    font-size:11px;
+    padding-top: 10px;
+}
+.normalForm p, .normalForm select, .normalForm option{
+    font-size: 11px;
+}
+.normalForm h4{
+    margin-bottom: 0px;
+}
+
+#videoPreview{
+    border: 1px solid #d9d9d9;
+    width: 620px;
+    padding: 0 0 10px 10px;
+    margin-top: 10px;
+
+}
+#videoPreviewPanel{
+
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#library-form{
+	margin: 1em;
+}
+
+.media-items{
+    border-bottom:medium none;
+    border-style:solid solid none;
+    border-width: 1px 1px medium;
+    border-color: #DFDFDF;
+    width:620px;
+    margin: 0 0 10px 10px;
+}
+
+.selectedMediaItem{
+    background-color: #ddd;
+}
+#leyenda{
+    height:20px;
+    margin: 0 10px;
+    width:30px;
+    background-color: #ddd;
+    float:left;
+}
+
+#mapcontrols{
+	background-color: transparent;
+	color: white;
+	width:200px;
+	height: 145px;
+	padding: 0 10px;
+	background-image: url(../images/black_back.png);
+    -moz-border-radius: 10px; /* FF1+ */
+  	-webkit-border-radius: 10px; /* Saf3+, Chrome */
+    border-radius: 10px; /* Opera 10.5, IE 9 */
+}
+
+#mapcontrols input{
+	
+	width: 196px;
+	
+}
