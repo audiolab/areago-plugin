@@ -152,12 +152,10 @@ if (!class_exists('Areago')){
 						        					</div>
 						        					<h3 class="hndle"><span>Map</span></h3>
 						        					<div class="inside">						        						
-						        						<div id="map-toolbar">						        							
-														 	<button id="addpoint">Add a new point</button>
-														    <button id="removepoint">Remove a point</button>														    
-						        						</div>
-						        						<div id="map"></div>
+						        											        				
+						        												        						
 						        						<div id="markers-table">
+						        						<p>Add the markers for your walk. Make Doble-Click to add a point.</p>
 						        							<?php $markers = $sm_helper->get_all_markers();
 						        							if ($markers!=false){
 																echo "<table>";
@@ -176,7 +174,9 @@ if (!class_exists('Areago')){
 						        												
 						        							?>
 						        							
-						        						</div><!-- markers-table -->		        						
+						        						</div><!-- markers-table -->
+						        						<div id="map"></div><!-- map -->	
+						        						<div class="clear"></div>	        						
 						        					</div><!-- inside -->
 						        				</div><!-- mapa -->		
 						        								        				

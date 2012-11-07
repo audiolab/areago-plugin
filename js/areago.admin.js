@@ -1,6 +1,6 @@
 
 
-    
+var markerLayer;
 
 jQuery("document").ready(function(){
       
@@ -22,24 +22,24 @@ jQuery("document").ready(function(){
             "Google Physical",
             {type: G_SATELLITE_MAP,numZoomLevels: 20}          
         );
+    
+    markerLayer = new OpenLayers.Layer.Markers('Markers');
+    
     map.addLayer(gphy);
-    console.log(Number(Areago.lng));
-    console.log(Number(Areago.zoom));
+    map.addLayer(markerLayer);
     map.setCenter(new OpenLayers.LonLat(Areago.lng, Areago.lat), Areago.zoom);    
     
     
-    
     mTable = jQuery('#markers-table table').dataTable({
-    	bJQueryUI:true,
-    	width:'auto'
+    	'bJQueryUI':true,
+    	width:"100%", 
+    	"sPaginationType": "full_numbers",
+    	'aoColumnDefs':[
+    		 { "bSearchable": false, "bVisible": false, "aTargets": [ 0,2,3 ] }             
+    	]
+    	
     });
-    
-    jQuery( "#markers-table" ).dialog({
-    	autoOpen: false,
-    	width:700
-    });
-    
-    
+
     
     jQuery( "#addpoint" ).button({
    
@@ -47,10 +47,7 @@ jQuery("document").ready(function(){
             primary: "ui-icon-plus"
         }
     	
-    }).click(function() {
-        jQuery( "#markers-table" ).dialog( "open" );
-        return false;
-    });
+    }),
 
     jQuery( "#removepoint" ).button({
     	   
@@ -60,4 +57,32 @@ jQuery("document").ready(function(){
     	
     });
     
+    jQuery('#markers-table table tbody tr').dblclick(function(event){
+    	//console.log(mTable.fnSettings().aoData);
+    	var u = event.currentTarget;
+    	console.log("ndsf");
+    	jQuery(mTable.fnSettings().aoData).each(function (){
+			if (this.nTr == u){
+				addPoint(this._aData);
+				console.log(this._aData);  //0 = ID, 2 = lat, 3 = long				
+			};
+
+		});
+    	
+    });
+    
 });
+
+
+function addPoint(data){
+	//0 = ID
+	//1 = Titulo
+	//2 = Latitud
+	//3 = Longitud
+	//4 = Autor
+	var size = new OpenLayers.Size(21,25);
+	var offset = new OpenLayers.Pixel(-(size.w/2), -size.h);
+	var icon = new OpenLayers.Icon('http://www.openlayers.org/dev/img/marker.png', size, offset);
+	markerLayer.addMarker(new OpenLayers.Marker(new OpenLayers.LonLat(data[3],data[2])), icon);
+	
+}
