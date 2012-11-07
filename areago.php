@@ -41,9 +41,15 @@ if (!class_exists('Areago')){
 		
 		function areago_admin_menu(){
 			add_menu_page( 'List Walks', 'Areago', 'manage_options', 'areago-manage', array($this,'areago_menu_page_callback'));
-			add_submenu_page( "areago-manage", "Add walk", "Add walk", 'manage_options', 'areago-manage-add', array($this, 'areago_manage_add') );
+			$add_page = add_submenu_page( "areago-manage", "Add walk", "Add walk", 'manage_options', 'areago-manage-add', array($this, 'areago_manage_add') );
+			
+			add_action('admin_print_styles-' . $add_page, array($this, 'areago_admin_print_styles_add_page'));
 			//add_options_page(__('Areago','areago'), __('Areago','areago'), 'manage_options', 'areago-options-menu',array($this,'areago_menu_page_callback'));				
 		}// areago_admin_menu
+		
+		function areago_admin_print_styles_add_page(){
+			wp_enqueue_style('areago_add_page_css', plugins_url('css/areago-add.css', __FILE__),array(), '1.0.2', 'all');
+		}
 		
 		function areago_manage_add(){
 			
@@ -59,21 +65,37 @@ if (!class_exists('Areago')){
 			   
 			        <!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
 			        <form id="areago-new-walk" method="get">
+			        <div id="poststuff">
 			            <!-- For plugins, we also need to ensure that the form posts back to our current page -->
 						            <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
-						            <div class="metabox-holder">
-						            	<div id="titlediv">
-						            		<div id="titlewrap">
-						            			<label class="hide-if-no-js" id="title-prompt-text" for="title">Title</label>
-						            			<input type="text" name="areago_title" size="30" tabindex="1" id="title" autocomplete="off" />	
-						            		</div>
-						            	
-						            	</div>
-						            </div>
+						            <div id="post-body" class="metabox-holder columns-2">
+						            	<div class="postbox-container" id="postbox-container-1"><p>shadsa</p></div>
+							            <div class="postbox-container" id="postbox-container-2">
+							            	<div id="titlediv">
+							            		<div id="titlewrap">
+							            			<label class="hide-if-no-js" id="title-prompt-text" for="title">Title</label>
+							            			<input type="text" name="areago_title" size="30" tabindex="1" id="title" autocomplete="off" />
+						    	        		</div><!-- titlewrap -->
+						        			</div><!-- titlediv --> 
+						        			<div id="normal-sortables" class="meta-box-sortables ui-sortable">
+						        				<div id="description" class="postbox">
+						        					<div class="handlediv" title="Click to toggle">
+						        						<br>
+						        					</div>
+						        					<h3 class="hndle"><span>Description</span></h3>
+						        					<div class="inside">
+						        						<p>Insert a small description for the walk you are creating</p>
+						        						<label class="screen-reader-text" for="description">Description</label>
+						        						<textarea rows="5" cols="40" name="areago_description" id="description" tabindex="2"></textarea>
+						        					</div>
+						        				</div><!-- description -->
+						        			</div><!-- normal-sortables  -->   	
+						            	</div> <!-- postbox-container-2 -->
+						            </div> <!-- post-body -->
 						            
 						            
-						            
-						        </form>
+					</div> <!--  poststuff -->	            
+					</form>
 						        
 						    </div>
 			<?php
