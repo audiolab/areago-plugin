@@ -1,2 +1,60 @@
 @CHARSET "UTF-8";
 
+#areago-description{
+	width:98%;
+}
+
+#map{
+	width:75%;
+	height:600px;
+	margin-bottom:20px;
+}
+
+#map-toolbar{
+	height:45px;
+}
+
+
+#icon-add{
+    background-image: url(../img/add.png) ;
+    background-repeat: no-repeat;
+}
+
+#icon-remove{
+    background-image: url(../img/remove_d.png);
+    background-repeat: no-repeat;
+}
+
+#icon-download{
+    background-image: url(../img/download_d.png);
+    background-repeat: no-repeat;
+}
+
+#icon-edit-walk{
+    background-image: url(../img/edit_d.png);
+    background-repeat: no-repeat;
+}
+
+#icon-add.enabled{
+    background-image: url(../img/add.png) ;
+    background-repeat: no-repeat;
+}
+
+#icon-remove.enabled{
+    background-image: url(../img/remove.png);
+    background-repeat: no-repeat;
+}
+
+#icon-download.enabled{
+    background-image: url(../img/download.png);
+    background-repeat: no-repeat;
+}
+
+#icon-edit-walk.enabled{
+    background-image: url(../img/edit.png);
+    background-repeat: no-repeat;
+}
+
+.olControlMousePosition{
+	color:white;
+}
