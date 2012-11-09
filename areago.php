@@ -37,6 +37,29 @@ if (!class_exists('Areago')){
 		
 		function register_actions(){
 			add_action('admin_menu',array($this, 'areago_admin_menu'));
+			add_action('wp_ajax_areago_get_marker',array($this,'areago_ajax_get_marker'));
+		}
+		
+		function areago_ajax_get_marker(){
+			if (!isset($_POST['id'])){
+				die();
+			}
+			if (!class_exists('Soundmap_Helper')){
+			
+				die('Soundmap Plugin is needed');
+			}
+
+			$sm_helper = new Soundmap_Helper();
+			$marker = $sm_helper->get_marker($_POST['id']);
+			if ($marker){
+				$rt['ID'] = $marker->ID;
+				$rt['title'] = $marker->post_title;
+				$rt['marker'] = $marker->marker;
+				//var_dump($marker);
+				echo json_encode($rt);				
+			}
+			die();
+			
 		}
 		
 		function areago_admin_menu(){
@@ -63,10 +86,10 @@ if (!class_exists('Areago')){
 				
 				wp_enqueue_script( 'areago_openlayers', plugins_url('js/openlayers/OpenLayers.debug.js', __FILE__) );
 								
-				wp_enqueue_script( 'areago_google', 'http://maps.google.com/maps?file=api&amp;v=2&amp;key=ABQIAAAAjpkAC9ePGem0lIq5XcMiuhR_wWLPFku8Ix9i2SXYRVK3e45q1BQUd_beF8dtzKET_EteAjPdGDwqpQ' );				
+				wp_enqueue_script( 'areago_google', 'http://maps.google.com/maps?file=api&amp;v=2&amp;key=AIzaSyAgkij6iwi66yV384I4BB-aKNbvWm5FKMQ' );				
 				
 				wp_enqueue_script( 'areago_datatables', plugins_url('js/jquery.datatables/jquery.dataTables.js', __FILE__) );
-				
+				wp_enqueue_script( 'areago_jplayer', plugins_url('js/jquery.jplayer/jquery.jplayer.min.js', __FILE__) );
 				wp_enqueue_script( 'areago_admin', plugins_url('js/areago.admin.js', __FILE__) );
 				
 				global $soundmap;
@@ -94,13 +117,11 @@ if (!class_exists('Areago')){
 			}
 			
 			$sm_helper = new Soundmap_Helper();
+			$markers = $sm_helper->get_all_markers();
 			
-					
-			?>
+			?>			
 			
-			
-			<div class="wrap">
-			 
+			<div class="wrap">			
 			<div id="icon-post" class="icon32"><br/></div>
 			<h2>Add New Walk</h2>
 			   
@@ -146,6 +167,12 @@ if (!class_exists('Areago')){
 						        					</div>
 						        				</div><!-- description -->
 						        				
+						        								        				
+						        			</div><!-- normal-sortables  -->   	
+						            	</div> <!-- postbox-container-2 -->
+						            </div> <!-- post-body -->
+						            <div class="clear"></div>
+						        	<div id="mapa-body" class="metabox-holder">
 						        				<div id="mapa" class="postbox">
 						        					<div class="handlediv" title="Click to toggle">
 						        						<br>
@@ -156,7 +183,7 @@ if (!class_exists('Areago')){
 						        												        						
 						        						<div id="markers-table">
 						        						<p>Add the markers for your walk. Make Doble-Click to add a point.</p>
-						        							<?php $markers = $sm_helper->get_all_markers();
+						        							<?php 
 						        							if ($markers!=false){
 																echo "<table>";
 																echo '<thead><tr><th>ID</th><th>Title</th><th>Latitude</th><th>Longitude</th><th>Author</th></tr></thead>';
@@ -176,14 +203,57 @@ if (!class_exists('Areago')){
 						        							
 						        						</div><!-- markers-table -->
 						        						<div id="map"></div><!-- map -->	
+						        						<div id="marker-editor">
+						        							<div id="marker-editor-holder">
+							        							<p>Title of the selected marker:<br><span id="marker-title">TITULO</span></p>
+							        							<div id="marker-sound">
+							        									<div id="jquery_jplayer_1" class="jp-jplayer"></div>
+																		<div id="jp_container_1">
+																			<div class="jp-gui ui-widget ui-widget-content ui-corner-all">
+																				<ul>
+																					<li class="jp-play ui-state-default ui-corner-all"><a href="javascript:;" class="jp-play ui-icon ui-icon-play" tabindex="1" title="play">play</a></li>
+																					<li class="jp-pause ui-state-default ui-corner-all"><a href="javascript:;" class="jp-pause ui-icon ui-icon-pause" tabindex="1" title="pause">pause</a></li>
+																					<li class="jp-stop ui-state-default ui-corner-all"><a href="javascript:;" class="jp-stop ui-icon ui-icon-stop" tabindex="1" title="stop">stop</a></li>
+																					<li class="jp-mute ui-state-default ui-corner-all"><a href="javascript:;" class="jp-mute ui-icon ui-icon-volume-off" tabindex="1" title="mute">mute</a></li>
+																					<li class="jp-unmute ui-state-default ui-state-active ui-corner-all"><a href="javascript:;" class="jp-unmute ui-icon ui-icon-volume-off" tabindex="1" title="unmute">unmute</a></li>
+																					<li class="jp-volume-max ui-state-default ui-corner-all"><a href="javascript:;" class="jp-volume-max ui-icon ui-icon-volume-on" tabindex="1" title="max volume">max volume</a></li>
+																				</ul>
+																				<div class="jp-progress-slider"></div>
+																				<div class="jp-volume-slider"></div>
+																				<div class="jp-current-time"></div>
+																				<div class="jp-duration"></div>
+																				<div class="jp-clearboth"></div>
+																			</div>
+																			<div class="jp-no-solution">
+																				<span>Update Required</span>
+																				To play the media you will need to either update your browser to a recent version or update your <a href="http://get.adobe.com/flashplayer/" target="_blank">Flash plugin</a>.
+																			</div>
+																		</div><!-- jp_container_1 -->
+							        							
+							        							</div><!-- marker-sound -->
+							        							<p>Position of the marker:</p>
+							        							<p>Latitude: <span id="marker-lat">LATITUDE</span><br>Longitude: <span id="marker-long">LONGITUDE</span>
+							        							<hr>
+							        							<h4>MARKER CONFIGURATION:</h4>
+							        							<p>
+							        								<label for="marker-radius">Radius:</label>
+							        								<input type="text" name="marker-radius" size="10" tabindex="4" id="marker-radius" autocomplete="off" />
+							        							</p>
+							        							<p>
+							        								<label for="marker-type">Type of marker:</label>
+							        								<select id="marker-type" name="marker-type">
+							        									<option value="ONCE">Play only one time</option>
+							        									<option value="LOOP">Play in loop while inside the area</option>
+							        									<option value="FINISH">Play until the sound is finished</option>
+							        									<option value="TOGLE">Togle ON/OFF the sound</option>							        									
+							        								</select>
+							        							</p>
+						        							</div><!-- marker-editor-holder -->
+						        						</div><!-- marker-editor -->
 						        						<div class="clear"></div>	        						
 						        					</div><!-- inside -->
 						        				</div><!-- mapa -->		
-						        								        				
-						        			</div><!-- normal-sortables  -->   	
-						            	</div> <!-- postbox-container-2 -->
-						            </div> <!-- post-body -->
-						            
+						            </div>
 						            
 					</div> <!--  poststuff -->	            
 					</form>

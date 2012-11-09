@@ -7,6 +7,7 @@
 #map{
 	width:60%;
 	height:600px;
+	
 	margin-bottom:20px;
 	float:left;
 }
@@ -16,9 +17,13 @@
 }
 
 #markers-table{
-	width:35%;
+	width:98%;	
+	margin-bottom:15px;
+}
+#marker-editor{
+	width:36%;
 	float:left;
-	margin-right:2%;
+	margin-left:2%;
 }
 
 .olControlMousePosition{
