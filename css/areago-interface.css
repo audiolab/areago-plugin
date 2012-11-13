@@ -722,7 +722,10 @@ table.dataTable th:active {
 .jp-gui {
 
 	position:relative;
-	height:60px;
+	height:45px;
+	background:#f6f6f6;
+	border:0;
+	
 }
 
 .jp-gui.jp-no-volume {
@@ -802,7 +805,7 @@ li.jp-unmute,
 
 	top:10px;
 
-	left:100px;
+	left:70px;
 
 	width:160px;
 
@@ -860,14 +863,15 @@ li.jp-unmute,
 
 .jp-current-time {
 
-	left:100px;
+	left:10px;
+	top:30px;
 
 }
 
 .jp-duration {
 
-	right:155px;
-
+left:200px;
+	top:30px;
 }
 
 .jp-gui.jp-no-volume .jp-duration {

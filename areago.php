@@ -75,18 +75,18 @@ if (!class_exists('Areago')){
 				//Styles and scripts for the add/edit page.
 				
 				wp_enqueue_script( 'jquery' );
-				//wp_enqueue_script('jquery_button');
+				wp_enqueue_script('jquery_button');
 				//wp_enqueue_script('jquery_dialog');
 				
 				wp_enqueue_style('areago_add_page_css', plugins_url('css/areago-add.css', __FILE__),array(), '1.0.2', 'all');
 				wp_enqueue_style('areago_interface_css', plugins_url('css/areago-interface.css', __FILE__),array(), '1.0.2', 'all');
-				
-				
+								
 				//wp_enqueue_style('areago_interface_css', 'http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css',array(), '1.0.2', 'all');
 				
 				wp_enqueue_script( 'areago_openlayers', plugins_url('js/openlayers/OpenLayers.debug.js', __FILE__) );
-								
-				wp_enqueue_script( 'areago_google', 'http://maps.google.com/maps?file=api&amp;v=2&amp;key=AIzaSyAgkij6iwi66yV384I4BB-aKNbvWm5FKMQ' );				
+				//http://maps.google.com/maps/api/js?v=3.7&amp;sensor=false
+				//http://maps.google.com/maps?file=api&amp;v=2&amp;key=AIzaSyAgkij6iwi66yV384I4BB-aKNbvWm5FKMQ
+			//	wp_enqueue_script( 'areago_google', 'http://maps.google.com/maps/api/js?v=3.7&amp;sensor=false' );				
 				
 				wp_enqueue_script( 'areago_datatables', plugins_url('js/jquery.datatables/jquery.dataTables.js', __FILE__) );
 				wp_enqueue_script( 'areago_jplayer', plugins_url('js/jquery.jplayer/jquery.jplayer.min.js', __FILE__) );
@@ -98,7 +98,7 @@ if (!class_exists('Areago')){
 				$params += $soundmap['origin'];
 				$params ['mapType'] = $soundmap['mapType'];				
 				
-				wp_localize_script('areago_admin','Areago',$params);
+				wp_localize_script('areago_admin','AreagoOptions',$params);
 								
 				
 			}
@@ -179,33 +179,42 @@ if (!class_exists('Areago')){
 						        					</div>
 						        					<h3 class="hndle"><span>Map</span></h3>
 						        					<div class="inside">						        						
-						        											        				
-						        												        						
-						        						<div id="markers-table">
-						        						<p>Add the markers for your walk. Make Doble-Click to add a point.</p>
-						        							<?php 
-						        							if ($markers!=false){
-																echo "<table>";
-																echo '<thead><tr><th>ID</th><th>Title</th><th>Latitude</th><th>Longitude</th><th>Author</th></tr></thead>';
-																foreach ($markers as $mark){
-																	echo "<tr>";
-																	echo '<td>' . $mark->ID . '</td>';
-																	echo '<td>' . $mark->post_title . '</td>';																	
-																	echo '<td>' . $mark->marker['lat'][0] . '</td>';
-																	echo '<td>' . $mark->marker['lng'][0] . '</td>';
-																	echo '<td>' . $mark->marker['author'][0] . '</td>';
-																	echo '</tr>';
-																}//foreach
-																	echo '</table>';
-															}//if
-						        												
-						        							?>
-						        							
-						        						</div><!-- markers-table -->
+        											    <div id="areago-toolbar">
+        											    	<button id="areago-add-button">Add a point</button>        											    	        											    	
+        											    </div>    				
+						        						<ul id="areago-add-menu">	
+						        							<li><a href="#">Play only one time</a></li>
+						        							<li><a href="#">Play in loop while inside the area</a></li>
+						        							<li><a href="#">Play until the sound is finished</a></li>
+						        							<li><a href="#">Togle ON/OFF the sound</a></li>
+						        							<li><a href="#">Conditional point</a></li>
+						        							<li><a href="#">WIFI positioned point</a></li>
+						        						</ul>						        						
 						        						<div id="map"></div><!-- map -->	
 						        						<div id="marker-editor">
-						        							<div id="marker-editor-holder">
-							        							<p>Title of the selected marker:<br><span id="marker-title">TITULO</span></p>
+						        							<div id="marker-editor-holder" class="panel_A">
+								        						<div id="markers-table">
+									        						<p>Add the markers for your walk. Make Doble-Click to add a point.</p>
+									        							<?php 
+									        							if ($markers!=false){
+																			echo "<table>";
+																			echo '<thead><tr><th>ID</th><th>Title</th><th>Latitude</th><th>Longitude</th><th>Author</th></tr></thead>';
+																			foreach ($markers as $mark){
+																				echo "<tr>";
+																				echo '<td>' . $mark->ID . '</td>';
+																				echo '<td>' . $mark->post_title . '</td>';																	
+																				echo '<td>' . $mark->marker['lat'][0] . '</td>';
+																				echo '<td>' . $mark->marker['lng'][0] . '</td>';
+																				echo '<td>' . $mark->marker['author'][0] . '</td>';
+																				echo '</tr>';
+																			}//foreach
+																				echo '</table>';
+																		}//if
+									        												
+									        							?>
+								        							
+								        						</div><!-- markers-table -->
+							        							<p>Title of the selected marker:<br/><h2><span id="marker-title">TITULO</span></h2></p>
 							        							<div id="marker-sound">
 							        									<div id="jquery_jplayer_1" class="jp-jplayer"></div>
 																		<div id="jp_container_1">
@@ -214,14 +223,8 @@ if (!class_exists('Areago')){
 																					<li class="jp-play ui-state-default ui-corner-all"><a href="javascript:;" class="jp-play ui-icon ui-icon-play" tabindex="1" title="play">play</a></li>
 																					<li class="jp-pause ui-state-default ui-corner-all"><a href="javascript:;" class="jp-pause ui-icon ui-icon-pause" tabindex="1" title="pause">pause</a></li>
 																					<li class="jp-stop ui-state-default ui-corner-all"><a href="javascript:;" class="jp-stop ui-icon ui-icon-stop" tabindex="1" title="stop">stop</a></li>
-																					<li class="jp-mute ui-state-default ui-corner-all"><a href="javascript:;" class="jp-mute ui-icon ui-icon-volume-off" tabindex="1" title="mute">mute</a></li>
-																					<li class="jp-unmute ui-state-default ui-state-active ui-corner-all"><a href="javascript:;" class="jp-unmute ui-icon ui-icon-volume-off" tabindex="1" title="unmute">unmute</a></li>
-																					<li class="jp-volume-max ui-state-default ui-corner-all"><a href="javascript:;" class="jp-volume-max ui-icon ui-icon-volume-on" tabindex="1" title="max volume">max volume</a></li>
 																				</ul>
 																				<div class="jp-progress-slider"></div>
-																				<div class="jp-volume-slider"></div>
-																				<div class="jp-current-time"></div>
-																				<div class="jp-duration"></div>
 																				<div class="jp-clearboth"></div>
 																			</div>
 																			<div class="jp-no-solution">
@@ -231,23 +234,14 @@ if (!class_exists('Areago')){
 																		</div><!-- jp_container_1 -->
 							        							
 							        							</div><!-- marker-sound -->
-							        							<p>Position of the marker:</p>
-							        							<p>Latitude: <span id="marker-lat">LATITUDE</span><br>Longitude: <span id="marker-long">LONGITUDE</span>
-							        							<hr>
-							        							<h4>MARKER CONFIGURATION:</h4>
+							        							<p><strong>Position of the marker:</strong></p>
+							        							<p>Latitude: <span id="marker-lat">LATITUDE</span><br>Longitude: <span id="marker-lng">LONGITUDE</span><br>
+							        							<p><button id="edit-position">Edit position</button></p>
 							        							<p>
 							        								<label for="marker-radius">Radius:</label>
-							        								<input type="text" name="marker-radius" size="10" tabindex="4" id="marker-radius" autocomplete="off" />
+							        								<input type="text" name="marker-radius" size="10" tabindex="4" id="marker-radius" autocomplete="off"  value="5"/>
 							        							</p>
-							        							<p>
-							        								<label for="marker-type">Type of marker:</label>
-							        								<select id="marker-type" name="marker-type">
-							        									<option value="ONCE">Play only one time</option>
-							        									<option value="LOOP">Play in loop while inside the area</option>
-							        									<option value="FINISH">Play until the sound is finished</option>
-							        									<option value="TOGLE">Togle ON/OFF the sound</option>							        									
-							        								</select>
-							        							</p>
+
 						        							</div><!-- marker-editor-holder -->
 						        						</div><!-- marker-editor -->
 						        						<div class="clear"></div>	        						

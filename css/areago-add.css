@@ -6,7 +6,7 @@
 
 #map{
 	width:60%;
-	height:600px;
+	height:900px;
 	
 	margin-bottom:20px;
 	float:left;
@@ -25,7 +25,20 @@
 	float:left;
 	margin-left:2%;
 }
+#marker-editor-holder h2{
+	margin-top:0px:
+}
+
+#areago-add-menu{
+	width:250px;
+	position:absolute;
+	z-index:2100;
+}
 
 .olControlMousePosition{
 	color:white;
 }
+
+
+
+
