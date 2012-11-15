@@ -498,6 +498,7 @@ table.dataTable td.dataTables_empty {
 table.dataTable tr.odd { background-color: #F9F9F9; border-bottom:1px solid lightGrey; }
 table.dataTable tr.even { background-color: white;border-bottom:1px solid lightGrey; }
 
+table.dataTable tr.row_selected{background-color:#b3b3b3;}
 
 table.dataTable tr.even:hover,
 table.dataTable tr.odd:hover,

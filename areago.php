@@ -183,7 +183,7 @@ if (!class_exists('Areago')){
         											    	<button id="areago-add-button">Add a point</button>        											    	        											    	
         											    </div>    				
 						        						<ul id="areago-add-menu">	
-						        							<li><a href="#">Play only one time</a></li>
+						        							<li><a id="areago-new-play_once" href="#">Play only one time</a></li>
 						        							<li><a href="#">Play in loop while inside the area</a></li>
 						        							<li><a href="#">Play until the sound is finished</a></li>
 						        							<li><a href="#">Togle ON/OFF the sound</a></li>
@@ -214,7 +214,8 @@ if (!class_exists('Areago')){
 									        							?>
 								        							
 								        						</div><!-- markers-table -->
-							        							<p>Title of the selected marker:<br/><h2><span id="marker-title">TITULO</span></h2></p>
+								        						<div id="areago-panel_A-marker-info">
+							        							<h2><span id="marker-title">TITULO</span></h2>
 							        							<div id="marker-sound">
 							        									<div id="jquery_jplayer_1" class="jp-jplayer"></div>
 																		<div id="jp_container_1">
@@ -240,12 +241,20 @@ if (!class_exists('Areago')){
 							        							<p>
 							        								<label for="marker-radius">Radius:</label>
 							        								<input type="text" name="marker-radius" size="10" tabindex="4" id="marker-radius" autocomplete="off"  value="5"/>
+							        								<p><button id="edit-radius">Edit radius</button></p>
 							        							</p>
-
+							        							</div><!-- areago-panel_A-marker-info -->
+							        							<hr>
+							        							<p><button id="areago-save-point">Save point</button></p>
 						        							</div><!-- marker-editor-holder -->
 						        						</div><!-- marker-editor -->
+						        						
 						        						<div class="clear"></div>	        						
 						        					</div><!-- inside -->
+						        					<div id="areago-dialog-confirm" title="Confirm action">
+													    <p><span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>Do you want to save the actual point?</p>
+													    <input type="hidden" class="type" value="">
+													</div> <!-- areago-dialog-confirm -->
 						        				</div><!-- mapa -->		
 						            </div>
 						            

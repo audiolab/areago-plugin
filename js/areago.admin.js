@@ -3,19 +3,34 @@ function Areago(){
 	
 	var _self = this;
 	var _loadAjaxInfo = false;
-	var _editingMarkerInfo = null;
 	
+	var _editingMarkerInfo = null;
 	var _editingMarker = null;
 	
-	var map = null;
-	var layers = {};
-	var projections = {};
-	var controls = {};
-	var style_mark = null;
-	var addedMarkers = new Array();
+	var _points = new Array(); //Total de puntos existentes.
+	var _inMemoryPoint = null; //Punto en el que estamos trabajando.
 	
+	var _activePoint = null;
+	var _save = false;
+	
+	var map = null;
+	var layers = {}; //Capas de OpenLayers
+	var projections = {}; //Proyecciones para modificaciones
+	var controls = {}; //Controles de modificacion
+	var style_mark = null;
+	var addedMarkers = new Array(); //Se puede borrar?
+	
+	var pointType =  {
+			PLAY_ONCE:			0,
+			PLAY_LOOP:			1,
+			PLAY_UNTILFINISH:	2,
+			PLAY_TOGGLE:		3,
+			PLAY_CONDITIONAL:	4,
+			WIFI:				5				
+	};
 	
 	var _zoomLevels = 22;
+	
 	
 	this.initialize = function(){
 		
@@ -27,43 +42,136 @@ function Areago(){
 		initButtons();
 		initSoundPlayer();
 		
+		initInterface();
+		registerDomEvents();
+		
 		
 	}//initialize
+	
+	
+	var initInterface = function (){
+		jQuery('.panel_A').hide();
+			jQuery('#areago-panel_A-marker-info').hide();
+			
+		jQuery( "#areago-dialog-confirm" ).dialog({
+            resizable: false,
+            height:140,
+            autoOpen:false,
+            modal: true,
+            buttons: {
+                "Save": function() {
+                	guardarPunto();
+                	createNewPoint(jQuery("#areago-dialog-confirm .type").val());
+                    jQuery( this ).dialog("close");
+                },
+                Cancel: function() {
+                    jQuery( this ).dialog( "close" );
+                }
+            }
+        });
+	}
+	
+	var registerDomEvents = function () {
+		
+		 jQuery('#marker-radius').change(function () {
+			 var nRad = jQuery(this).val();
+			 if (parseInt(nRad)){
+				 var c = _inMemoryPoint.features[0]._circle;
+				 resizeCircle(nRad, c);			
+				 _save = true;
+			 }
+
+		 });
+		
+	}
+	
+	var resizeCircle = function (radius, circle){
+		
+		var cRadius = circle.radius; // origin radius
+		var sFactor = radius / cRadius; // scale factor
+		var cP = circle.geometry.bounds.getCenterPixel();  // origin
+		circle.radius = radius;
+		var centerPoint = new OpenLayers.Geometry.Point(cP.x, cP.y); // transform Pixel to Point
+		circle.geometry.resize(sFactor, centerPoint);
+		circle.layer.drawFeature(circle);
+		_save = true;
+		
+	}//resizeCircle
 
 	var registerLayersEvents = function () {
         
 		layers.circles.events.on({
 			
-            "featuremodified": updateRadius            
+            "featuremodified": eventCircleFeatureModified            
         });
 		
 		layers.markers.events.on({
-			'featuremodified': updateMarkerPosition
+			'featuremodified': eventMarkerFeatureModified
 		});
 		
 	} //registerLayersEvents
 	
-	var updateMarkerPosition = function (event){
+	var markerMovedUpdateData = function(point, marker){
 		
-		console.log(event);
-		var point = new OpenLayers.Geometry.Point(event.feature.geometry.x,event.feature.geometry.y);
-		point.transform(projections.base, projections.vector);
-		var id = event.feature.ID;
-		var f = layers.circles.features.searchMarkerById(id);
-		var circle = layers.circles.features[f];
-		console.log(point);
-		console.log(circle);
+		jQuery('#marker-lat').empty().append(point.y);
+    	jQuery('#marker-lng').empty().append(point.x);
 		
 	}
 	
-	var updateRadius = function (event){
+	var eventMarkerFeatureModified = function (event){
+		
+		var point = new OpenLayers.Geometry.Point(event.feature.geometry.x,event.feature.geometry.y);				
+		
+		var circle = getCircleRelatedToMarker(event.feature);
+		if (circle){
+			moveCircle(point.x, point.y, circle); //Chequear			
+		}
+		point.transform(projections.base, projections.vector);
+		controls.markerDrag.deactivate();
+		markerMovedUpdateData(point, event.feature);
+		_save = true;
+		
+	}
+	
+	var getCircleRelatedToMarker = function (marker){
+		
+		var _tmp = _inMemoryPoint.features;
+		
+		for (var i=0;i<_tmp.length;i++)
+		{ 
+			if (marker.id == _tmp[i]._marker.id){
+				return _tmp[i]._circle;
+			}
+		}
+		
+		return false;
+		
+	}
+	
+	var moveCircle = function (x, y, circle){
+		
+		var cP = circle.geometry.bounds.getCenterPixel();
+		circle.geometry.move(x - cP.x, y - cP.y);
+		circle.layer.drawFeature(circle);
+		_save = true;
+		
+	}// moveCircleById
+	
+	var circleResizedUpdateData = function (radius, circle){
+		
+		jQuery('#marker-radius').val(radius);
+
+	}
+	
+	var eventCircleFeatureModified = function (event){
 
 		var area = event.feature.geometry.getArea();
         var radius = 0.565352 * Math.sqrt(area);
         radius = Math.round(radius);            
-        
-        jQuery('#marker-radius').val(radius);
+        circleResizedUpdateData(radius, event.feature);
         event.feature.radius = radius;
+    	controls.circleResize.deactivate();
+    	_save = true;
 
 	} // updateRadius
 	
@@ -154,6 +262,19 @@ function Areago(){
 		
 	}//initSoundPlayer
 	
+	this.guardarPunto = function() {
+		if (_inMemoryPoint.saved){
+			var pos = _inMemoryPoint.position;
+			_points[pos] = _inMemoryPoint;
+		}else {
+			var nPos = _points.push(_inMemoryPoint);
+			_points[nPos].saved = true;
+			_points[nPos].position = nPos;
+		}
+		_save = false;
+			
+	}
+	
 	var initButtons = function() {
 	
 		jQuery('#edit-position').button()
@@ -161,10 +282,28 @@ function Areago(){
 	    	//Posiciona el marcador en el punto deseado.
 	    	controls.circleResize.deactivate();
 	    	controls.markerDrag.activate();
-	    	controls.markerDrag.selectFeature(_editingMarker);
-	    	//console.log(_editingMarker);
+	    	controls.markerDrag.selectFeature(_inMemoryPoint.features[0]._marker);
+
 	    	return false;
 	    });
+		
+		jQuery('#edit-radius').button()
+	    .click(function(){
+	    	//Posiciona el marcador en el punto deseado.
+	    	controls.circleResize.activate();
+	    	controls.markerDrag.deactivate();
+	     	controls.circleResize.selectFeature(_inMemoryPoint.features[0]._circle);
+	    	return false;
+	    });
+		
+		jQuery('#areago-save-point')
+			.button()
+			.click(function(){
+				guardarPunto();
+				return false;
+			});
+		
+		
 		
 	    jQuery('#areago-add-button')
 		    .button({
@@ -186,13 +325,44 @@ function Areago(){
 	    	})
 	    	.buttonset(); //  jQuery('#areago-add-button')
 	    
+	    jQuery('#areago-new-play_once').click(function (){
+	    	if (_save){
+	    		jQuery( "#areago-dialog-confirm .type" ).val(pointType.PLAY_ONCE);
+	    		jQuery( "#areago-dialog-confirm" ).dialog('open');
+	    	}
+	    	else{
+		    	_self.createNewPoint(pointType.PLAY_ONCE);
+	    	}
+	    	
+	    });
+	    
 	    jQuery('#areago-add-menu').menu().hide();
 		
 	}//initButtons
 	
 	var initTables = function(){
 		
-	    var mTable = jQuery('#markers-table table').dataTable({
+	    jQuery('#markers-table table tbody tr').click(function(event){
+
+	    	var u = event.currentTarget;
+	    	//Pongo como seleccionada....
+    	  if ( jQuery(this).hasClass('row_selected') ) {
+              jQuery(this).removeClass('row_selected');
+          }
+          else {
+              mTable.$('tr.row_selected').removeClass('row_selected');
+              jQuery(this).addClass('row_selected');
+          }// row-selected
+	    	  
+	    	jQuery(mTable.fnSettings().aoData).each(function (){
+				if (this.nTr == u){
+					addPointFromTable(this._aData);
+				};
+			});
+	    	
+	    });//jQuery('#markers-table table tbody tr').dblclick	    	    
+
+		var mTable = jQuery('#markers-table table').dataTable({
 	    	'bJQueryUI':true,
 	    	width:"100%", 
 	    	"sPaginationType": "full_numbers",
@@ -200,18 +370,7 @@ function Areago(){
 	    		 { "bSearchable": false, "bVisible": false, "aTargets": [ 0,2,3 ] }             
 	    	]
 	    });
-	    
-	    jQuery('#markers-table table tbody tr').dblclick(function(event){
-
-	    	var u = event.currentTarget;
-	    	jQuery(mTable.fnSettings().aoData).each(function (){
-				if (this.nTr == u){
-					addPoint(this._aData);
-				};
-			});
-	    	
-	    });//jQuery('#markers-table table tbody tr').dblclick	    	    
-	    
+	    	    
 	} //initTables
 	
 	var createMapAndLayers = function(){
@@ -313,7 +472,70 @@ function Areago(){
 		
 	}
 	
-	var addPoint = function(data){
+	this.createNewPoint = function(type){
+		
+		var _tmpPoint = {};
+		
+		_tmpPoint.type = type;
+		_tmpPoint.features = new Array();
+		
+		switch (type)
+		{
+			case pointType.PLAY_ONCE:
+				_tmpPoint.lat = 0;
+				_tmpPoint.lon = 0;
+				_tmpPoint.radius = 5;
+				_tmpPoint.file = "";
+				prepareDomForPlay_Once();
+				
+				break;
+			case pointType.PLAY_LOOP:
+				_tmpPoint.lat = 0;
+				_tmpPoint.lon = 0;
+				_tmpPoint.radius = 5;
+				_tmpPoint.file = "";
+				
+				break;
+			case pointType.PLAY_UNTILFINISH:
+				_tmpPoint.lat = 0;
+				_tmpPoint.lon = 0;
+				_tmpPoint.radius = 5;
+				_tmpPoint.file = "";
+				
+				break;
+			case pointType.PLAY_TOGGLE:
+				
+				break;
+			case pointType.WIFI:
+				
+				break;
+				
+		}//switch
+		
+		_inMemoryPoint = _tmpPoint; 
+		
+	}// createNewPoint
+	
+	var prepareDomForPlay_Once = function (){
+		
+		jQuery('#marker-title').empty();
+    	jQuery('#marker-lat').empty();
+    	jQuery('#marker-lng').empty();
+		jQuery("#jquery_jplayer_1").jPlayer('setMedia',{mp3:""});
+		jQuery('.panel_A').show();
+		jQuery('#areago-panel_A-marker-info').hide();
+
+	} // prepareDomForPlay
+	
+	var cleanLayers = function (features){
+
+		for (var i=0; i<features.length; i++){
+			layers.circles.removeFeatures([features[i]._circle]);
+			layers.markers.removeFeatures([features[i]._marker]);
+		}
+	} // clearLayers
+	
+	var addPointFromTable = function(data){
 	
 		//0 = ID
 		//1 = Titulo
@@ -326,26 +548,41 @@ function Areago(){
 				id: data[0],			
 			};
 		
+		
+		if (_inMemoryPoint.length != 0){
+			//Se supone que tenemos un punto, y no deber’amos, por lo que me lo cargo
+			cleanLayers(_inMemoryPoint.features);
+			_inMemoryPoint = {};
+		}
+		
 		var fLon = parseFloat(data[3]);
 		var fLat = parseFloat(data[2]);
 		
-		_self.addCircleToMap(fLon, fLat, data[0]);
-		_editingMarker = _self.addMarkerToMap(fLon, fLat, data[0]);
+		var circle = _self.addCircleToMap(fLon, fLat, data[0]);
+		var marker = _self.addMarkerToMap(fLon, fLat, data[0]);
 		
 		controls.circleResize.activate();
 		
 		_loadAjaxInfo = true;
 
+		_save = true;
+		_inMemoryPoint.ID = data[0];
+		_inMemoryPoint.lat = fLat;
+		_inMemoryPoint.lon = fLon;
+		_inMemoryPoint.features = [{_marker: marker, _circle: circle}];
+		_inMemoryPoint.saved = false;
+		
 		jQuery.post(ajaxurl, dataFromMarker, function(response) {			
-				
-				addedMarkers.push(response);
-				
+											
 				if(_loadAjaxInfo){
-					_editingMarkerInfo = response;
+					_inMemoryPoint.response = response;
 					updateMarkerDataInDom(response);
+					_inMemoryPoint.file = response.marker.attachments[0].name;
 					_loadAjaxInfo=false;
 				}
+				
 		}, 'json');  // jQuery.post
+		
 		
 		
 	}//addPoint
@@ -356,6 +593,7 @@ function Areago(){
     	jQuery('#marker-lat').empty().append(data.marker.lat[0]);
     	jQuery('#marker-lng').empty().append(data.marker.lng[0]);
 		jQuery("#jquery_jplayer_1").jPlayer('setMedia',{mp3:data.marker.attachments[0].fileURI});
+		jQuery('#areago-panel_A-marker-info').show();
 
 	}//updateMarkerDataInDom
 	
