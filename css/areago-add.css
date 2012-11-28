@@ -1,15 +1,21 @@
 @CHARSET "UTF-8";
 
-#areago-description{
+#areago-excerpt{
 	width:98%;
 }
 
 #map{
-	width:60%;
-	height:900px;
 	
-	margin-bottom:20px;
+	height:400px;
+	
+}
+#map-holder{
+	height:440px;
+	width:32%;
 	float:left;
+	margin-bottom:20px;
+	margin-right:2%;
+	
 }
 
 #map-toolbar{
@@ -17,13 +23,28 @@
 }
 
 #markers-table{
-	width:98%;	
+	width:32%;
+	float:left;	
 	margin-bottom:15px;
+	margin-right:2%;
 }
 #marker-editor{
-	width:36%;
+		
+}
+#areago-toolbar{
+	height:40px;
+}
+
+#areago-toolbar li{
+	display:inline;
+}
+.markers-editor-properties{
 	float:left;
-	margin-left:2%;
+	width:30%;
+}
+
+#areago-point-actions{
+	float:left;
 }
 #marker-editor-holder h2{
 	margin-top:0px:
@@ -35,10 +56,27 @@
 	z-index:2100;
 }
 
+#areago-message{
+	background-color:lightYellow;
+	border-color:#E6DB55;
+	margin:5px 0 15px;
+	padding:0 0.6em;
+	border-width:1px;
+	border-style:solid;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+}
+
 .olControlMousePosition{
 	color:white;
 }
 
 
-
+#console{
+	width:100%;
+	height:200px;
+	overflow-y:auto;
+	background-color:black;
+	color:white;
+}
 

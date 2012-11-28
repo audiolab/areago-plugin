@@ -217,3 +217,134 @@ if (!class_exists('Areago_Paseos_List_Table')){
 	}//class Areago_List_Table
 
 }
+
+
+if (!class_exists('PclZip')){
+	require_once( ABSPATH . 'wp-admin/includes/class-pclzip.php');
+}
+
+if (!class_exists('Areago_ZIP')){
+	class Areago_ZIP{
+
+		function create_zip($id){
+			if ($id == NULL)
+				return FALSE;
+		
+			$file_helper = new Areago_File_Helper();
+			
+			$path = $file_helper->get_Path($id);
+			$zip_file = new PclZip($path . "/data.zip");
+			
+			$db_helper = new Areago_DB_Helper();
+			$walk = $db_helper->get_walk($id);
+			
+			if (!$walk)
+				return FALSE;
+			
+			$walk->points = json_decode($walk->points);
+			$d = json_encode($walk);
+			
+			$file_helper->save_data_file($path . "/info.json", $d);
+			$files = array();
+			$files[] = $path . "/info.json";
+			
+			foreach ($walk->points->features as $point){
+				
+				$files[] = $point->properties->filePath;
+			};
+			$tt = $zip_file->create($files,PCLZIP_OPT_REMOVE_ALL_PATH);
+			if ($tt == 0) {
+				die('Error : '.$zip_file->errorInfo(true));
+			}
+			unlink($path . '/info.json');
+			var_dump($files);
+					
+		
+		} //create_zip
+		
+
+	}
+}
+
+if (!class_exists('Areago_File_Helper')){
+	
+	class Areago_File_Helper{
+		
+		function get_Path($id){
+
+			if ($this->check()===FALSE){
+				return FALSE;
+			}
+						
+			$uploads = wp_upload_dir();
+			$uploads_basedir=$uploads["basedir"];
+			
+			return $uploads_basedir . "/areago/" . $id;
+				
+		}
+		
+		
+		function check(){
+			//This function checks if the upload files is created, its is writeable, if the areago is created, and if it is writeable.
+			
+			$uploads = wp_upload_dir();
+			$uploads_basedir=$uploads["basedir"];
+			$uploads_baseURL=$uploads["baseurl"];
+			
+			$sound_walk_dir=$uploads_basedir . "/areago";
+			
+			$dir_exists=is_dir($uploads_basedir);
+			if (!$dir_exists){
+				return FALSE;
+			}
+			
+			$is_writable=is_writable($uploads_basedir);
+			if (!$is_writable){
+				return FALSE;
+			}
+			
+			$dir_exists=is_dir($sound_walk_dir);
+			if (!$dir_exists){
+				mkdir($sound_walk_dir);
+			}
+			$is_writable=is_writable($sound_walk_dir);
+			if (!$is_writable){
+				return FALSE;
+			}
+						
+			return true;
+			
+		}
+		
+		function createFolder($id){
+			
+			if ($this->check()===FALSE){
+				return FALSE;
+			}
+			
+			$uploads = wp_upload_dir();
+			$uploads_basedir=$uploads["basedir"];							
+			$sound_walk_dir=$uploads_basedir . "/areago/" . $id;
+
+			$dir_exists=is_dir($sound_walk_dir);
+			if (!$dir_exists){
+				return mkdir($sound_walk_dir);	
+			}
+				
+			$is_writable=is_writable($sound_walk_dir);
+			if (!$is_writable){
+				return FALSE;
+			}		
+
+		}
+		
+		function save_data_file($file, $data){
+			$fp = fopen($file, 'w');
+			fwrite($fp, $data);
+			fclose($fp);
+		}
+		
+		
+	}//class	
+	
+}
