@@ -28,7 +28,7 @@ if (!class_exists('Areago_Paseos_List_Table')){
 			/**
 			 * First, lets decide how many records per page to show
 			 */
-			$per_page = 5;
+			$per_page = 10;
 		
 			$columns = $this->get_columns();
 			$hidden = array('id');
@@ -139,7 +139,7 @@ if (!class_exists('Areago_Paseos_List_Table')){
 			$columns = array(	
 					'id'			=> 'ID',				
 					'name'	     	=> 'Title',
-					'description'	=> 'Description',
+					'excerpt'		=> 'Excerpt',
 					'recordings'	=> 'Number of recordings'
 			);
 			return $columns;
@@ -170,7 +170,7 @@ if (!class_exists('Areago_Paseos_List_Table')){
 			switch($column_name){
 				case 'name':
 				case 'id':
-				case 'description':
+				case 'excerpt':
 				case 'recordings':
 					return $item[$column_name];
 				default:
@@ -180,8 +180,8 @@ if (!class_exists('Areago_Paseos_List_Table')){
 		
 		function column_name($item){
 			$actions = array(
-					'edit'      => sprintf('<a href="?page=%s&action=%s&book=%s">Edit</a>',$_REQUEST['page'],'edit',$item['id']),
-					'delete'    => sprintf('<a href="?page=%s&action=%s&book=%s">Delete</a>',$_REQUEST['page'],'delete',$item['id']),
+					'edit'      => sprintf('<a href="?page=%s&action=%s&walk=%s">Edit</a>',$_REQUEST['page'],'edit',$item['id']),
+					'delete'    => sprintf('<a href="?page=%s&action=%s&walk=%s">Delete</a>',$_REQUEST['page'],'delete',$item['id']),
 			);		
 			return sprintf('%1$s %2$s', $item['name'], $this->row_actions($actions,true) );
 		}
@@ -257,7 +257,6 @@ if (!class_exists('Areago_ZIP')){
 				die('Error : '.$zip_file->errorInfo(true));
 			}
 			unlink($path . '/info.json');
-			var_dump($files);
 					
 		
 		} //create_zip

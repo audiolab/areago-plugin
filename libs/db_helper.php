@@ -45,6 +45,16 @@ if (!class_exists('Areago_DB_Helper')){
 			
 		}
 		
+		function delete_walk($id){
+			global $wpdb;
+			$table_name = $wpdb->prefix . self::TABLE_NAME;
+				
+			$sql = "DELETE FROM $table_name WHERE id='$id'";
+			$res = $wpdb->get_results($wpdb->prepare($sql),ARRAY_A);
+			return $res;
+				
+		}
+		
 		function get_list_walks(){
 			$walks = $this->get_array_walks();
 			if ($walks==NULL)

@@ -38,6 +38,7 @@ if (!class_exists('Areago')){
 		function register_actions(){
 			add_action('admin_menu',array($this, 'areago_admin_menu'));
 			add_action('wp_ajax_areago_get_marker',array($this,'areago_ajax_get_marker'));
+			add_filter('media_send_to_editor', array($this, 'areago_media_send_to_editor'), 50, 3);
 		}
 		
 		function areago_ajax_get_marker(){
@@ -76,17 +77,24 @@ if (!class_exists('Areago')){
 				
 				wp_enqueue_script( 'jquery' );
 				wp_enqueue_script('jquery_button');
+				wp_enqueue_script('jquery-ui-slider');
+				wp_enqueue_script('thickbox');
+				wp_enqueue_script('media-upload');
+				//wp_enqueue_script('prototype');
 				//wp_enqueue_script('jquery_dialog');
+				wp_enqueue_script('json2');
 				
 				wp_enqueue_style('areago_add_page_css', plugins_url('css/areago-add.css', __FILE__),array(), '1.0.2', 'all');
 				wp_enqueue_style('areago_interface_css', plugins_url('css/areago-interface.css', __FILE__),array(), '1.0.2', 'all');
-								
+				wp_enqueue_style('thickbox');
 				//wp_enqueue_style('areago_interface_css', 'http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css',array(), '1.0.2', 'all');
 				
 				wp_enqueue_script( 'areago_openlayers', plugins_url('js/openlayers/OpenLayers.debug.js', __FILE__) );
+				wp_enqueue_script( 'areago_prototype', plugins_url('js/prototype.js', __FILE__) );
+				//wp_enqueue_script( 'classy', plugins_url('js/classy.js', __FILE__) );
 				//http://maps.google.com/maps/api/js?v=3.7&amp;sensor=false
 				//http://maps.google.com/maps?file=api&amp;v=2&amp;key=AIzaSyAgkij6iwi66yV384I4BB-aKNbvWm5FKMQ
-			//	wp_enqueue_script( 'areago_google', 'http://maps.google.com/maps/api/js?v=3.7&amp;sensor=false' );				
+				wp_enqueue_script( 'areago_google', 'http://maps.google.com/maps/api/js?v=3.7&amp;sensor=false' );				
 				
 				wp_enqueue_script( 'areago_datatables', plugins_url('js/jquery.datatables/jquery.dataTables.js', __FILE__) );
 				wp_enqueue_script( 'areago_jplayer', plugins_url('js/jquery.jplayer/jquery.jplayer.min.js', __FILE__) );
@@ -104,6 +112,22 @@ if (!class_exists('Areago')){
 			}
 		}
 		
+		function areago_media_send_to_editor($html, $attachment_id, $attachment) {
+			// check for the GET vars added in boxView
+			parse_str($_POST['_wp_http_referer'], $aPostVars);
+			if (isset($aPostVars['target'])&&$aPostVars['target']=='areago-picture' && wp_attachment_is_image($attachment_id)) {
+				// add extra data to the $attachement array prior to returning the json_encoded string
+				$attachment['id'] = $attachment_id;
+				$attachment['edit'] = get_edit_post_link($attachment_id);
+				$attachment['input'] = $aPostVars['input'];
+				$attachment['preview'] = $aPostVars['preview'];
+				$aImg = wp_get_attachment_image_src( $attachment_id, 'thumb');
+				if ($aImg) $attachment['img_thumb'] = $aImg[0];
+				$html = json_encode($attachment);
+			}
+			return $html;
+		}
+		
 		function areago_manage_add(){
 			
 			if (!current_user_can('manage_options'))  {
@@ -117,7 +141,12 @@ if (!class_exists('Areago')){
 			}
 			
 			$sm_helper = new Soundmap_Helper();
-			$markers = $sm_helper->get_all_markers();
+			$markers = $sm_helper->get_all_markers();		
+							
+			if( isset($_POST[ 'areago-form-add' ]) && $_POST[ 'areago-form-add' ] == 'Y' ) {
+				//Tenemos datos, por lo que hay que guardarlos...	
+				$this->areago_save_walk();
+			}
 			
 			?>			
 			
@@ -126,7 +155,7 @@ if (!class_exists('Areago')){
 			<h2>Add New Walk</h2>
 			   
 			        <!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-			        <form id="areago-new-walk" method="get">
+			        <form id="areago-new-walk" method="POST">
 			        <div id="poststuff">
 			            <!-- For plugins, we also need to ensure that the form posts back to our current page -->
 						            <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
@@ -139,11 +168,41 @@ if (!class_exists('Areago')){
 						        						<br>
 						        					</div>
 						        					<h3 class="hndle"><span>Language</span></h3>
-						        					<div class="inside">
-						        						<label class="screen-reader-text" for="language">Language</label>
-						        						<input name="areago_language" id="language" type="text" tabindex="2" size="10" autocomplete="on"/>
+						        					<div class="inside">						        					
+						        						<label class="screen-reader-text" for="areago-language">Language</label>
+						        						<input name="areago_language" id="areago-language" type="text" tabindex="2" size="10" autocomplete="on"/>
 						        					</div>
-						        				</div><!-- description -->
+						        					
+						        				</div><!-- language -->
+						        				<div id="areago-picture-wrapper" class="postbox">
+						        					<div class="handlediv" title="Click to toggle">
+						        						<br>
+						        					</div>
+						        					<h3 class="hndle"><span>Picture</span></h3>
+						        					<div class="inside">
+						        					<?php $sUri = esc_url( str_replace('&type=','&target=areago-picture&input=areago-picture&preview=areago-picture-preview&tab=library&type=',get_upload_iframe_src('image')) );?>						        					
+						        						<p>
+														<?php echo '<a title="Imagenes" href="'.$sUri.'" class="thickbox button image" data-type="image">Choose Image</a> '; ?>
+														</p>
+														<div id="areago-picture-preview">
+														</div>
+						        						<input name="areago_picture" id="areago-picture" type="hidden" />
+						        					</div>						        					
+						        					
+						        				</div><!-- language -->
+						        				<div id="areago-actions" class="postbox">
+						        					<div class="handlediv" title="Click to toggle">
+						        						<br>
+						        					</div>
+						        					<h3 class="hndle"><span>Actions</span></h3>
+						        					<div class="inside">
+						        					<p class="submit">
+														<input type="submit" name="Submit" class="button-primary" id="areago-submit" value="<?php esc_attr_e('Save Changes') ?>" />
+													</p> 
+						        					</div>						        					
+						        					
+						        				</div><!-- areago-actions -->
+						        									
 						        			</div><!-- lateral-sortables  --> 
 						        									            	
 						            	</div><!-- postbox-container-1 -->
@@ -155,15 +214,24 @@ if (!class_exists('Areago')){
 						    	        		</div><!-- titlewrap -->
 						        			</div><!-- titlediv --> 
 						        			<div id="normal-sortables" class="meta-box-sortables ui-sortable">
+						        				<div id="areago-excerpt-box" class="postbox">
+						        					<div class="handlediv" title="Click to toggle">
+						        						<br>
+						        					</div>
+						        					<h3 class="hndle"><span>Excerpt</span></h3>
+						        					<div class="inside">
+						        						<label class="screen-reader-text" for="aregao_excerpt">Excerpt</label>
+														<textarea id="areago-excerpt" name="areago_excerpt"></textarea>
+						        					</div>
+						        				</div><!-- excerpt -->
 						        				<div id="description" class="postbox">
 						        					<div class="handlediv" title="Click to toggle">
 						        						<br>
 						        					</div>
 						        					<h3 class="hndle"><span>Description</span></h3>
 						        					<div class="inside">
-						        						<p>Insert an small description for the walk you are creating.</p>
 						        						<label class="screen-reader-text" for="description">Description</label>
-						        						<textarea rows="5" cols="40" name="areago_description" id="areago-description" tabindex="3"></textarea>
+						        						<?php wp_editor("", "areago_description", array('media_buttons'=>false));?>						        						
 						        					</div>
 						        				</div><!-- description -->
 						        				
@@ -178,23 +246,30 @@ if (!class_exists('Areago')){
 						        						<br>
 						        					</div>
 						        					<h3 class="hndle"><span>Map</span></h3>
-						        					<div class="inside">						        						
-        											    <div id="areago-toolbar">
-        											    	<button id="areago-add-button">Add a point</button>        											    	        											    	
-        											    </div>    				
-						        						<ul id="areago-add-menu">	
-						        							<li><a id="areago-new-play_once" href="#">Play only one time</a></li>
-						        							<li><a href="#">Play in loop while inside the area</a></li>
-						        							<li><a href="#">Play until the sound is finished</a></li>
-						        							<li><a href="#">Togle ON/OFF the sound</a></li>
-						        							<li><a href="#">Conditional point</a></li>
-						        							<li><a href="#">WIFI positioned point</a></li>
-						        						</ul>						        						
-						        						<div id="map"></div><!-- map -->	
+						        					<div class="inside">		
+						        						<div id="areago-toolbar">
+						        							<ul id="areago-add-menu">	
+						        								<li><a id="areago-new-play_once" href="#">P1</a></li>
+							        							<li><a id="areago-new-play_loop" href="#">PL</a></li>
+							        							<li><a id="areago-new-play_finish" href="#">PF</a></li>
+							        							<li><a id="areago-new-toogle" href="#">T</a></li>
+							        							<li><a id="areago-new-conditional" href="#">C</a></li>
+							        							<li><a id="areago-new-wifi" href="#">W</a></li>
+						        							</ul>	
+						        						
+						        						</div> <!-- toolbar -->				        						
+					        							<div id="map-holder">
+
+					        							<div id="map">
+						        						
+						        						</div><!-- map -->					        							
+					        							</div>
+						        							
+	
 						        						<div id="marker-editor">
 						        							<div id="marker-editor-holder" class="panel_A">
 								        						<div id="markers-table">
-									        						<p>Add the markers for your walk. Make Doble-Click to add a point.</p>
+									        						<p>Add the markers for your walk. Click to add a point.</p>
 									        							<?php 
 									        							if ($markers!=false){
 																			echo "<table>";
@@ -214,7 +289,7 @@ if (!class_exists('Areago')){
 									        							?>
 								        							
 								        						</div><!-- markers-table -->
-								        						<div id="areago-panel_A-marker-info">
+								        						<div id="areago-panel_A-marker-info" class="markers-editor-properties">
 							        							<h2><span id="marker-title">TITULO</span></h2>
 							        							<div id="marker-sound">
 							        									<div id="jquery_jplayer_1" class="jp-jplayer"></div>
@@ -235,17 +310,18 @@ if (!class_exists('Areago')){
 																		</div><!-- jp_container_1 -->
 							        							
 							        							</div><!-- marker-sound -->
-							        							<p><strong>Position of the marker:</strong></p>
-							        							<p>Latitude: <span id="marker-lat">LATITUDE</span><br>Longitude: <span id="marker-lng">LONGITUDE</span><br>
 							        							<p><button id="edit-position">Edit position</button></p>
 							        							<p>
-							        								<label for="marker-radius">Radius:</label>
-							        								<input type="text" name="marker-radius" size="10" tabindex="4" id="marker-radius" autocomplete="off"  value="5"/>
+							        								<strong>Radius: </strong><span id="marker-radius"></span>							        								
 							        								<p><button id="edit-radius">Edit radius</button></p>
 							        							</p>
 							        							</div><!-- areago-panel_A-marker-info -->
-							        							<hr>
-							        							<p><button id="areago-save-point">Save point</button></p>
+							        							<div id="areago-point-actions">
+								        							<hr>
+								        							<p><input type="checkbox" id="areago-reference" name="reference-point" value="areago_reference"><label for="areago-reference">Define this point as reference point</label>
+								        							<div id="areago-message" class="message"><p>Prueba de mensaje</p></div>
+								        							<p><button id="areago-save-point">Save point</button></p>
+								        						</div> <!-- areago-point-actions -->
 						        							</div><!-- marker-editor-holder -->
 						        						</div><!-- marker-editor -->
 						        						
@@ -258,9 +334,16 @@ if (!class_exists('Areago')){
 						        				</div><!-- mapa -->		
 						            </div>
 						            
-					</div> <!--  poststuff -->	            
+					</div> <!--  poststuff -->	         
+					
+					<input type="hidden" id="areago-points" value="" name="areago_points"/>
+					<input type="hidden" id="areago-walk-id" value="" name="areago_walk_id"/>
+					<input type="hidden" name="areago-form-add" value="Y"/>
+  
 					</form>
 						        
+						    </div>
+						    <div id="console">
 						    </div>
 			<?php
 		}
@@ -272,6 +355,14 @@ if (!class_exists('Areago')){
 				wp_die( __('You do not have sufficient permissions to access this page.') );
 			}
 			
+			if( isset($_GET[ 'action' ]) && $_GET[ 'action' ] == 'delete' ) {
+				//Tenemos datos, por lo que hay que guardarlos...
+				$id = $_GET['walk'];
+				
+				$db_helper = new Areago_DB_Helper();
+				$db_helper->delete_walk($id);
+			}
+			
 			$table = new Areago_Paseos_List_Table();
 			$table->prepare_items();
 			?>
@@ -281,7 +372,12 @@ if (!class_exists('Areago')){
 			        <h2>Walks <a href="<?php echo sprintf('?page=%s&action=%s"',$_REQUEST['page'],'add')?>" class="add-new-h2">Add walk</a></h2>			       
 			        
 			        <!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-			        <form id="movies-filter" method="get">
+			        <form id="areago-lists" method="get">
+			        <style>
+			        #areago-lists #excerpt{
+						width:auto;
+					}
+			        </style>
 			            <!-- For plugins, we also need to ensure that the form posts back to our current page -->
 			            <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
 			            <!-- Now we can render the completed list table -->
@@ -305,6 +401,23 @@ if (!class_exists('Areago')){
 			}*/
 		}// areago_menu_page_callback
 		
+		function areago_save_walk(){
+			
+			$db_helper = new Areago_DB_Helper();
+			$id = $db_helper->save_walk();
+			if ($id === FALSE)
+				wp_die("Fallo al escribir en la base de datos");
+			
+			$file_helper = new Areago_File_Helper();
+			$created = $file_helper->createFolder($id);
+			
+			if (!$created)
+				wp_die("Fallo al intentar crear la carpeta");
+			
+			$zip_helper = new Areago_ZIP();
+			$zip_helper->create_zip($id);
+
+		}//function areago_save_walk		
 		
 	}// class Areago
 	
@@ -323,7 +436,7 @@ function areago_install(){
 	
 	global $wp_rewrite;
 	$newrules = array();
-	$newrules['areago/listado'] = 'wp-content/plugins/areago-plugin/prueba.php';
+	$newrules['areago/listado'] = 'wp-content/plugins/areago-plugin/listado.php';
 	$newrules['areago/descarga/(\d*)$'] = 'wp-content/plugins/areago-plugin/descarga.php?paseo=$1';				
 	$wp_rewrite->non_wp_rules = $newrules + $wp_rewrite->non_wp_rules;
 		
@@ -333,6 +446,9 @@ function areago_install(){
 	$db_helper = new Areago_DB_Helper();
 	$db_helper->install();
 	
+	
+	$file_helper = new Areago_File_Helper();
+	$fileOK = $file_helper->check();
 	
 }// areago_install
 
