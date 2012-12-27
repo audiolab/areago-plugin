@@ -43,7 +43,8 @@
 	width:30%;
 }
 
-#areago-point-actions{
+#areago-point-actions,
+#areago-point-fade{
 	float:left;
 }
 #marker-editor-holder h2{

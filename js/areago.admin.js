@@ -30,7 +30,8 @@ function Areago(){
 			PLAY_UNTILFINISH:	2,
 			PLAY_TOGGLE:		3,
 			PLAY_CONDITIONAL:	4,
-			WIFI:				5				
+			WIFI:				5,
+			LAYER:				6
 	};
 	
 	var _zoomLevels = 22;
@@ -56,6 +57,7 @@ function Areago(){
 	var initInterface = function (){
 		jQuery('.panel_A').hide();
 			jQuery('#areago-panel_A-marker-info').hide();
+			jQuery('#areago-point-fade').hide();
 			
 		jQuery( "#areago-dialog-confirm" ).dialog({
             resizable: false,
@@ -345,6 +347,11 @@ function Areago(){
 				
 			});
 		
+		jQuery('#areago-fade')
+		.click(function(){
+			_inMemoryPoint.fade = jQuery(this)[0].checked;
+		});
+		
 		jQuery('#areago-submit').click(function (e){
 			var data = serializeData();
 			var dJ = JSON.stringify(data);
@@ -366,6 +373,32 @@ function Areago(){
 	    	e.preventDefault();
 	    	
 	    });
+
+	    jQuery('#areago-new-play_loop').click(function (e){
+	    	if (_save){
+	    		jQuery( "#areago-dialog-confirm .type" ).val(pointType.PLAY_LOOP);
+	    		jQuery( "#areago-dialog-confirm" ).dialog('open');
+	    	}
+	    	else{	    			    		
+		    	_self.createNewPoint(pointType.PLAY_LOOP);
+	    	}
+	    	
+	    	e.preventDefault();
+	    	
+	    });
+	    jQuery('#areago-new-play_finish').click(function (e){
+	    	if (_save){
+	    		jQuery( "#areago-dialog-confirm .type" ).val(pointType.PLAY_UNTILFINISH);
+	    		jQuery( "#areago-dialog-confirm" ).dialog('open');
+	    	}
+	    	else{	    			    		
+		    	_self.createNewPoint(pointType.PLAY_UNTILFINISH);
+	    	}
+	    	
+	    	e.preventDefault();
+	    	
+	    });	    
+	    
 	    
 	    
 		
@@ -532,18 +565,12 @@ function Areago(){
 				break;
 				
 			case pointType.PLAY_LOOP:
-				_tmpPoint.lat = 0;
-				_tmpPoint.lon = 0;
-				_tmpPoint.radius = 5;
-				_tmpPoint.file = "";
-				
+				_tmpPoint = new Areago.Point.PlayLoop(style_mark, style_mark_red, layers, controls, projections, map);
+				prepareDomForPlay_Once();
 				break;
 			case pointType.PLAY_UNTILFINISH:
-				_tmpPoint.lat = 0;
-				_tmpPoint.lon = 0;
-				_tmpPoint.radius = 5;
-				_tmpPoint.file = "";
-				
+				_tmpPoint = new Areago.Point.PlayUntil(style_mark, style_mark_red, layers, controls, projections, map);
+				prepareDomForPlay_Once();			
 				break;
 			case pointType.PLAY_TOGGLE:
 				
@@ -577,7 +604,8 @@ function Areago(){
 		jQuery('#areago-reference').button( "refresh");
 		jQuery('#areago-save-point').button( "option", "disabled", true);
 		jQuery('#areago-point-actions').hide();
-        mTable.$('tr.row_selected').removeClass('row_selected');		
+        mTable.$('tr.row_selected').removeClass('row_selected');
+        jQuery('#areago-fade').removeAttr('checked');
 
 	} // prepareDomForPlay
 	
@@ -601,8 +629,8 @@ function Areago(){
 			case pointType.PLAY_UNTILFINISH:
 				p.type = t;
 				p.radius = point.features[0]._circle.radius;
-				p.lat = point.features[0]._marker.lat;
-				p.lon = point.features[0]._marker.lon;
+				p.lat = Number(point.features[0]._marker.lat) / 10000;
+				p.lon = Number(point.features[0]._marker.lon) / 10000;
 				p.file = point.file;
 				var u = new OpenLayers.Format.GeoJSONWG();
 				p.valores = u.write([point.features[0]._marker], true);
@@ -678,6 +706,8 @@ function Areago(){
 		jQuery("#jquery_jplayer_1").jPlayer('setMedia',{mp3:data.marker.attachments[0].fileURI});
 		jQuery('#marker-radius').empty().append('5');
 		jQuery('#areago-panel_A-marker-info').show();
+        jQuery('#areago-point-fade').show();
+		
 		
 	}//updateMarkerDataInDom
 	
@@ -709,77 +739,6 @@ Array.prototype.searchById=function(id)
 }
 
 
-OpenLayers.Format.GeoJSONWG = OpenLayers.Class(OpenLayers.Format.GeoJSON,{
-	
-    /**
-     * APIMethod: write
-     * Serialize a feature, geometry, array of features into a GeoJSON string.
-     *
-     * Parameters:
-     * obj - {Object} An <OpenLayers.Feature.Vector>, <OpenLayers.Geometry>,
-     *     or an array of features.
-     * pretty - {Boolean} Structure the output with newlines and indentation.
-     *     Default is false.
-     *
-     * Returns:
-     * {String} The GeoJSON string representation of the input geometry,
-     *     features, or array of features.
-     */
-    write: function(obj, pretty) {
-        var geojson = {
-            "type": null
-        };
-        if(OpenLayers.Util.isArray(obj)) {
-            geojson.type = "FeatureCollection";
-            var numFeatures = obj.length;
-            geojson.features = new Array(numFeatures);
-            for(var i=0; i<numFeatures; ++i) {
-                var element = obj[i];
-                if(!element instanceof OpenLayers.Feature.Vector) {
-                    var msg = "FeatureCollection only supports collections " +
-                              "of features: " + element;
-                    throw msg;
-                }
-                if(element.attributes.hasOwnProperty('type')){
-                	if (element.attributes.type != 'circle'){
-                        geojson.features[i] = this.extract.feature.apply(
-                                this, [element]
-                            );
-                	};
-                }else{
-                    geojson.features[i] = this.extract.feature.apply(
-                            this, [element]
-                        );                	
-                };
-            }
-        } else if (obj.CLASS_NAME.indexOf("OpenLayers.Geometry") == 0) {
-            geojson = this.extract.geometry.apply(this, [obj]);
-        } else if (obj instanceof OpenLayers.Feature.Vector) {
-            geojson = this.extract.feature.apply(this, [obj]);
-            if(obj.layer && obj.layer.projection) {
-                geojson.crs = this.createCRSObject(obj);
-            }
-        }
-        return OpenLayers.Format.JSON.prototype.write.apply(this,
-                                                            [geojson, pretty]);
-    },
-    
-    extract: {
-    	'feature' : OpenLayers.Format.GeoJSON.prototype.extract.feature,
-    	'geometry': OpenLayers.Format.GeoJSON.prototype.extract.geometry,
-    	'point':OpenLayers.Format.GeoJSON.prototype.extract.point,
-    	'multipoint':OpenLayers.Format.GeoJSON.prototype.extract.multipoint,
-    	'linestring': OpenLayers.Format.GeoJSON.prototype.extract.linestring,
-    	'multilinestring': OpenLayers.Format.GeoJSON.prototype.extract.multilinestring,
-    	'polygon':OpenLayers.Format.GeoJSON.prototype.extract.polygon,
-    	'multipolygon':OpenLayers.Format.GeoJSON.prototype.extract.multipolygon,
-    	'collection': OpenLayers.Format.GeoJSON.prototype.extract.collection
-    },
-    
-    CLASS_NAME: "OpenLayers.Format.GeoJSONWG" 
-	
-	
-});
 
 
 Areago.Point = Class.create({
@@ -793,6 +752,7 @@ Areago.Point = Class.create({
 	id: null,
 	initialized: false,
 	enabled: true,
+	layer: 0,
 	
 	initialize: function(style, style_dis, layers, controls, projections, map){
 		this.position=[];
@@ -807,7 +767,8 @@ Areago.Point = Class.create({
         this.projections = projections;
         this.features = [];
         this.initialized = false;
-        this.enabled = true;		
+        this.enabled = true;	
+        this.layer=0;
         
 	},
 	
@@ -815,6 +776,7 @@ Areago.Point = Class.create({
 		this.position=[];
 		this.file="";
 		this.filePath = "";
+		this.layer=0;
 		
 		for (var i=0; i<this.features.length; i++){
 			this.layers.circles.removeFeatures([this.features[i].circle]);
@@ -862,9 +824,10 @@ Areago.Point = Class.create({
 			circle: fcircle
 		});
 		
+		var np = this.converMetersToLatLon(lonlat.lat,lonlat.lon);
 		this.position.push({
-			lat: lonlat.lat,
-			lon: lonlat.lon,
+			lat: np.lat,
+			lon: np.lon,
 			radius: radius
 		});
 		
@@ -911,15 +874,15 @@ Areago.Point = Class.create({
 			this.moveCircle(point.x, point.y, circle); //Chequear			
 		}
 		var _ll = this.getPositionLatLon(event.feature);
-		this.position[index].lat = _ll.y
-		this.position[index].lon = _ll.x;
+		this.position[index].lat = _ll.lat
+		this.position[index].lon = _ll.lon;
 		
 	},
 	
 	getPositionLatLon: function (mark){
 		
 		var index = this.markerIndex(mark);
-		var _m = this.features[index].marker;
+		var _m = this.features[index].marker.geometry;
 		var point = new OpenLayers.Geometry.Point(_m.x,_m.y);
 		point.transform(this.projections.base, this.projections.vector);
 		var latlon = {
@@ -928,6 +891,16 @@ Areago.Point = Class.create({
 		}
 		return latlon;
 		
+	},
+	
+	converMetersToLatLon:function (lat,lon){
+		var point = new OpenLayers.Geometry.Point(lon,lat);
+		point.transform(this.projections.base, this.projections.vector);
+		var latlon = {
+				lon: point.x,
+				lat: point.y
+		}
+		return latlon;
 	},
 		
 	markerIndex: function (mark) {
@@ -958,6 +931,10 @@ Areago.Point = Class.create({
 
 		
 	},
+	
+	setLayer: function(lay){
+		this.layer = lay;
+	},
 
 	getPoint: function(index){
 		return this.features[index].marker;
@@ -975,6 +952,8 @@ Areago.Point.PlayOnce = Class.create(Areago.Point, {
 	
 	type: 0,
 	postID: null,
+	fade: false,
+	
 	
 	setFile: function (filename, path){
 		this.file = filename;
@@ -986,7 +965,10 @@ Areago.Point.PlayOnce = Class.create(Areago.Point, {
 				type: "Feature",
 				properties: {
 					file: this.file,
-					filePath: this.filePath
+					filePath: this.filePath,
+					layer: this.layer,
+					type: 0,
+					autofade: this.fade
 				},
 				geometry: {
 					type: 'Circle',
@@ -1005,19 +987,157 @@ Areago.Point.PlayOnce = Class.create(Areago.Point, {
 	CLASS_NAME: "Areago.Point.PlayOnce"
 });
 
-
-OpenLayers.Geometry.Circle = OpenLayers.Class(OpenLayers.Geometry.Polygon, {
+Areago.Point.PlayLoop = Class.create(Areago.Point, {
 	
-	initialize:function (origin, radius){
+	type: 1,
+	postID: null,
+	fade: false,
+	
+	setFile: function (filename, path){
+		this.file = filename;
+		this.filePath = path;
+	},	
+	
+	exportable: function(){
+		var _d = {
+				type: "Feature",
+				properties: {
+					file: this.file,
+					filePath: this.filePath,
+					layer: this.layer,
+					type: 1,
+					autofade:this.fade
+				},
+				geometry: {
+					type: 'Circle',
+					properties: {
+					   radius_units: "m"
+					},
+					radius: this.position[0].radius,
+					coordinates: [ this.position[0].lon, this.position[0].lat ]
+				}
 		
-		var t = OpenLayers.Geometry.Polygon.createRegularPolygon(origin, radius, 40);
-		OpenLayers.Geometry.Polygon.apply(this, [t.components]);//this.__proto__.__proto__.initialize(t.components);
+		};
+		return _d;
+	},
 
+	
+	CLASS_NAME: "Areago.Point.PlayLoop"
+});
+
+Areago.Point.PlayUntil = Class.create(Areago.Point, {
+	
+	type: 2,
+	postID: null,
+	fade:false,
+	
+	
+	setFile: function (filename, path){
+		this.file = filename;
+		this.filePath = path;
+	},	
+	
+	exportable: function(){
+		var _d = {
+				type: "Feature",
+				properties: {
+					file: this.file,
+					filePath: this.filePath,
+					layer: this.layer,
+					type: 2,
+					autofade:this.fade
+					
+				},
+				geometry: {
+					type: 'Circle',
+					properties: {
+					   radius_units: "m"
+					},
+					radius: this.position[0].radius,
+					coordinates: [ this.position[0].lon , this.position[0].lat  ]
+				}
+		
+		};
+		return _d;
+	},
+
+	
+	CLASS_NAME: "Areago.Point.PlayUntil"
+});
+
+Areago.Point.Wifi = Class.create(Areago.Point, {
+	
+	type: 5,
+	postID: null,
+	essid:"",
+	
+	
+	setFile: function (filename, path){
+		this.file = filename;
+		this.filePath = path;
+	},	
+	
+	exportable: function(){
+		var _d = {
+				type: "Feature",
+				properties: {
+					file: this.file,
+					filePath: this.filePath,
+					layer: this.layer
+				},
+				geometry: {
+					type: 'Circle',
+					properties: {
+					   radius_units: "m"
+					},
+					radius: this.position[0].radius,
+					coordinates: [ this.position[0].lon , this.position[0].lat ]
+				}
+		
+		};
+		return _d;
 	},
 	
+	initialize: function(){
+		this.file = "";	
+		this.filePath = "";
+        this.id = OpenLayers.Util.createUniqueID(this.CLASS_NAME + "_"); 
+        this.initialized = false;
+        this.enabled = true;	
+        this.layer=0;
+        this.essid ="";
+	},
 	
-	CLASS_NAME: "OpenLayers.Geometry.Polygon"
+	reset: function () {
+		
+		this.file="";
+		this.filePath = "";
+		this.layer=0;
+		this.essid="";
+		
+	},
+
+	
+	CLASS_NAME: "Areago.Point.Wifi"
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 (function($){

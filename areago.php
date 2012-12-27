@@ -22,7 +22,7 @@ if (!class_exists('Areago')){
 	class Areago{
 		
 		function areago_init (){
-			
+			add_image_size('areago_picture', 512, 512, true);
 		}// areago_init
 		
 		function areago_generate_rewrite_rules(){
@@ -142,7 +142,6 @@ if (!class_exists('Areago')){
 			
 			$sm_helper = new Soundmap_Helper();
 			$markers = $sm_helper->get_all_markers();		
-							
 			if( isset($_POST[ 'areago-form-add' ]) && $_POST[ 'areago-form-add' ] == 'Y' ) {
 				//Tenemos datos, por lo que hay que guardarlos...	
 				$this->areago_save_walk();
@@ -316,6 +315,9 @@ if (!class_exists('Areago')){
 							        								<p><button id="edit-radius">Edit radius</button></p>
 							        							</p>
 							        							</div><!-- areago-panel_A-marker-info -->
+							        							<div id="areago-point-fade">
+							        								<p><input type="checkbox" id="areago-fade" name="auto-fade" value="auto_fade"><label for="areago-fade">Auto Fade</label></p>
+							        							</div>
 							        							<div id="areago-point-actions">
 								        							<hr>
 								        							<p><input type="checkbox" id="areago-reference" name="reference-point" value="areago_reference"><label for="areago-reference">Define this point as reference point</label>

@@ -18,6 +18,8 @@ if (!class_exists('Areago_DB_Helper')){
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			time timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			name tinytext NOT NULL,
+			picture tinytext,
+			pic_id tinytext,
 			excerpt tinytext NOT NULL,
 			description text NOT NULL,
 			recordings int DEFAULT 0 NOT NULL,
@@ -69,6 +71,7 @@ if (!class_exists('Areago_DB_Helper')){
 				$o->resumen = $walk['excerpt'];
 				$o->grabaciones = $walk['recordings'];
 				$o->idioma = $walk['language'];
+				$o->imagen = $walk['picture'];
 				$o->hash = $walk['hash'];
 				$o->referencia = json_decode($walk['reference']);
 				$r[] = $o;
@@ -105,15 +108,29 @@ if (!class_exists('Areago_DB_Helper')){
 					$update = true;
 					$sql = "UPDATE ";
 				}
-								
+				$pic_id = $_POST['areago_picture'];
+				$pic_url = 'none';
+				
+				if ($pic_id != ''){
+					$pic_info = wp_get_attachment_image_src($pic_id, 'areago_picture' ,false);
+					/*var_dump(wp_get_attachment_metadata($pic_id));
+					var_dump(get_attached_file($pic_id));
+					var_dump(wp_upload_dir());*/
+					if($pic_info)
+						$pic_url = $pic_info[0];
+				}
+				$imagen_url = $pic_url;				
+					
 				$recordings = count($puntosOBJ);
 				$hash = md5(uniqid(rand(), TRUE));
-				$sql .= "(name, excerpt, description, recordings, language, points, hash)";
-				$sql .= "VALUES (%s, %s, %s, %d, %s, %s, %s)";
+				$sql .= "(name, excerpt, picture, pic_id, description, recordings, language, points, hash)";
+				$sql .= "VALUES (%s, %s, %s, %s, %s, %d, %s, %s, %s)";
 				
 				$res = $wpdb->query( $wpdb->prepare($sql,
 						$titulo,
 						$excerpt,
+						$imagen_url,
+						$pic_id,
 						$descripcion,
 						$recordings,
 						$language,

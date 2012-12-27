@@ -180,7 +180,7 @@ if (!class_exists('Areago_Paseos_List_Table')){
 		
 		function column_name($item){
 			$actions = array(
-					'edit'      => sprintf('<a href="?page=%s&action=%s&walk=%s">Edit</a>',$_REQUEST['page'],'edit',$item['id']),
+					'edit'      => sprintf('<a href="?page=%s&action=%s&walk=%s">Edit</a>','areago-manage-add','edit',$item['id']),
 					'delete'    => sprintf('<a href="?page=%s&action=%s&walk=%s">Delete</a>',$_REQUEST['page'],'delete',$item['id']),
 			);		
 			return sprintf('%1$s %2$s', $item['name'], $this->row_actions($actions,true) );
@@ -225,6 +225,9 @@ if (!class_exists('PclZip')){
 
 if (!class_exists('Areago_ZIP')){
 	class Areago_ZIP{
+		
+
+		
 
 		function create_zip($id){
 			if ($id == NULL)
@@ -234,7 +237,7 @@ if (!class_exists('Areago_ZIP')){
 			
 			$path = $file_helper->get_Path($id);
 			$zip_file = new PclZip($path . "/data.zip");
-			
+			//$zip_file->add(PCLZIP_CB_PRE_ADD,array($this,'myPreAddCallBack'));
 			$db_helper = new Areago_DB_Helper();
 			$walk = $db_helper->get_walk($id);
 			
@@ -252,7 +255,31 @@ if (!class_exists('Areago_ZIP')){
 				
 				$files[] = $point->properties->filePath;
 			};
-			$tt = $zip_file->create($files,PCLZIP_OPT_REMOVE_ALL_PATH);
+			
+			//Imagen
+			$picture = $walk->picture;
+			if ($picture!='none'){
+				$upload_dir = wp_upload_dir();
+				$base_path = $upload_dir['basedir'];
+				$image_data = wp_get_attachment_metadata($walk->pic_id);
+				if ($image_data){
+					$sizes = $image_data['sizes'];
+					if (isset($sizes['areago_picture'])){
+						$fn = $sizes['areago_picture']['file'];
+						$com =$image_data['file'];
+						$com = explode('/', $com);
+						
+						array_pop($com);
+						$com = implode('/', $com);
+						$icon_path = $base_path . '/' . $com .'/' . $fn;
+						$files[] = $icon_path;
+					}
+				}
+				
+			}
+			
+			
+			$tt = $zip_file->create($files,PCLZIP_OPT_REMOVE_ALL_PATH,PCLZIP_CB_PRE_ADD,'areago_zipCallBack');
 			if ($tt == 0) {
 				die('Error : '.$zip_file->errorInfo(true));
 			}
@@ -345,5 +372,20 @@ if (!class_exists('Areago_File_Helper')){
 		
 		
 	}//class	
+	
+}
+
+function areago_zipCallBack($p_event, &$p_header){
+	
+	$info = pathinfo($p_header['stored_filename']);
+	// ----- bak files are skipped
+	if ($info['extension'] == 'jpg') {		
+		$p_header['stored_filename'] = 'icono.jpg';
+		return 1;
+	}
+	// ----- all other files are simply added
+	else {
+		return 1;
+	}
 	
 }
