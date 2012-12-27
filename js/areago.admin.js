@@ -753,6 +753,7 @@ Areago.Point = Class.create({
 	initialized: false,
 	enabled: true,
 	layer: 0,
+	vibrate: false,
 	
 	initialize: function(style, style_dis, layers, controls, projections, map){
 		this.position=[];
@@ -769,6 +770,7 @@ Areago.Point = Class.create({
         this.initialized = false;
         this.enabled = true;	
         this.layer=0;
+        this.vibrate = false;
         
 	},
 	
@@ -777,7 +779,7 @@ Areago.Point = Class.create({
 		this.file="";
 		this.filePath = "";
 		this.layer=0;
-		
+		this.vibrate=false;
 		for (var i=0; i<this.features.length; i++){
 			this.layers.circles.removeFeatures([this.features[i].circle]);
 			this.layers.markers.removeFeatures([this.features[i].marker]);
@@ -879,6 +881,10 @@ Areago.Point = Class.create({
 		
 	},
 	
+	setVibration: function (value){
+		this.vibrate = value;
+	},
+	
 	getPositionLatLon: function (mark){
 		
 		var index = this.markerIndex(mark);
@@ -968,7 +974,8 @@ Areago.Point.PlayOnce = Class.create(Areago.Point, {
 					filePath: this.filePath,
 					layer: this.layer,
 					type: 0,
-					autofade: this.fade
+					autofade: this.fade,
+					vibrate: this.vibrate
 				},
 				geometry: {
 					type: 'Circle',
@@ -1006,7 +1013,9 @@ Areago.Point.PlayLoop = Class.create(Areago.Point, {
 					filePath: this.filePath,
 					layer: this.layer,
 					type: 1,
-					autofade:this.fade
+					autofade:this.fade,
+					vibrate: this.vibrate
+
 				},
 				geometry: {
 					type: 'Circle',
@@ -1045,7 +1054,9 @@ Areago.Point.PlayUntil = Class.create(Areago.Point, {
 					filePath: this.filePath,
 					layer: this.layer,
 					type: 2,
-					autofade:this.fade
+					autofade:this.fade,
+					vibrate: this.vibrate
+
 					
 				},
 				geometry: {
@@ -1083,7 +1094,9 @@ Areago.Point.Wifi = Class.create(Areago.Point, {
 				properties: {
 					file: this.file,
 					filePath: this.filePath,
-					layer: this.layer
+					layer: this.layer,
+					vibrate: this.vibrate
+
 				},
 				geometry: {
 					type: 'Circle',
